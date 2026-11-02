@@ -44,7 +44,7 @@ function showKey(rec) {
 function login() {
   screen(`<h2>Welcome back</h2><input id="p" type="password" placeholder="Password"><button id="go">Unlock</button><a id="fg">Forgot password? Use recovery key</a>`);
   const go = async () => { try { data = JSON.parse(await invoke('unlock', { password: $('#p').value })); last = JSON.stringify(data); startApp(); } catch (x) { err(String(x)); } };
-  $('#go').onclick = go; $('#p').onkeydown = (e) => e.key === 'Enter' && go(); $('#p').focus(); $('#fg').onclick = recover;
+  $('#go').onclick = go; $('#p').onkeydown = (e) => { if (e.key === 'Enter') go(); }; $('#p').focus(); $('#fg').onclick = recover;
 }
 function recover() {
   screen(`<h2>Recover access</h2><input id="k" placeholder="Recovery key"><input id="p1" type="password" placeholder="New password (10+ characters)"><input id="p2" type="password" placeholder="Confirm new password"><button id="go">Reset password</button><a id="bk">Back</a>`);
@@ -86,7 +86,7 @@ function startApp() {
   $('#title').onchange = (e) => { pages()[cur.idx].title = e.target.value || 'Untitled'; persist(); };
   $('#add').onclick = async () => { capture(); pages().push(mkPage(secOf(cur.sec), pages().length + 1)); await goTo(cur.sec, pages().length - 1); };
   $('#del').onclick = async () => {
-    if (!confirm('Delete this page? This cannot be undone.')) return;
+    if (!(await ask('Delete this page? This cannot be undone.'))) return;
     if (wb) { U.univerAPI.disposeUnit(wb.getId()); wb = null; }
     pages().splice(cur.idx, 1);
     if (!pages().length) pages().push(mkPage(secOf(cur.sec), 1));
@@ -114,6 +114,13 @@ function snippet(p) {
   return 'Blank page';
 }
 function modal(html) { const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = `<div class="box">${html}</div>`; document.body.appendChild(m); return m; }
+function ask(msg) {
+  return new Promise((res) => {
+    const m = modal(`<h2>${esc(msg)}</h2><button id="y">Yes, delete</button> <button class="x">Cancel</button>`);
+    m.querySelector('#y').onclick = () => { m.remove(); res(true); };
+    m.querySelector('.x').onclick = () => { m.remove(); res(false); };
+  });
+}
 function bookView() {
   capture(); const s = secOf(cur.sec);
   const m = modal(`<h2>${s.name} · ${pages().length} page${pages().length > 1 ? 's' : ''}</h2><div class="cards">${pages().map((p, i) => `<div class="pg" data-i="${i}"><b>${esc(p.title)}</b><small>${esc(snippet(p))}</small></div>`).join('')}</div><button class="x">Close</button>`);
@@ -126,7 +133,7 @@ function pwDialog() {
   m.querySelector('#ok').onclick = async () => {
     const e2 = m.querySelector('#e2');
     if (m.querySelector('#n1').value !== m.querySelector('#n2').value) return (e2.textContent = 'Passwords do not match.');
-    try { await invoke('change_password', { oldPassword: m.querySelector('#o').value, newPassword: m.querySelector('#n1').value }); m.remove(); alert('Password changed. Your recovery key still works.'); }
+    try { await invoke('change_password', { oldPassword: m.querySelector('#o').value, newPassword: m.querySelector('#n1').value }); m.querySelector('.box').innerHTML = '<h2>Password changed</h2><p>Your recovery key still works.</p><button class="x">OK</button>'; m.querySelector('.x').onclick = () => m.remove(); }
     catch (x) { e2.textContent = String(x); }
   };
 }
