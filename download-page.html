@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Download Reflecting</title>
+<style>
+:root{--navy:#1F2A44;--gold:#B8923A;--paper:#FAF6EC}
+*{box-sizing:border-box}body{margin:0;font:17px/1.5 system-ui,Segoe UI,sans-serif;background:var(--paper);color:#222}
+header{background:var(--navy);color:#fff;text-align:center;padding:40px 20px}
+h1{font-family:Georgia,serif;margin:0;font-size:40px}header p{margin:8px 0 0;font-style:italic;color:#E9DDB8}
+main{max-width:760px;margin:0 auto;padding:24px 18px 60px}
+.dl{display:block;background:var(--navy);color:#fff;text-decoration:none;text-align:center;padding:18px;border-radius:10px;font-size:20px;font-weight:600;margin:10px 0}
+.dl:hover{background:#33426b}.dl.alt{background:#fff;color:var(--navy);border:2px solid var(--navy);font-size:16px;padding:12px}
+.tabs{display:flex;gap:8px;margin:28px 0 10px}.tabs button{flex:1;padding:12px;border:2px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;font-size:16px;cursor:pointer}.tabs button.on{background:var(--navy);color:#fff}
+.step{background:#fff;border-left:6px solid var(--gold);border-radius:6px;padding:14px 16px;margin:14px 0}.step h3{margin:0 0 6px;font-family:Georgia,serif;color:var(--navy)}
+.step svg{display:block;width:100%;max-width:340px;margin-top:10px;border-radius:6px;border:1px solid #ddd}
+.note{background:#EFE7D2;border-radius:6px;padding:12px 14px;margin:14px 0;font-size:15px}code{background:#eee;padding:2px 6px;border-radius:4px;word-break:break-all}
+.hide{display:none}small{color:#666}
+</style></head><body>
+<header><h1>Reflecting</h1><p>“Search me, O God, and know my heart.” — Psalm 139:23</p></header>
+<main>
+<p><b>Private and personal.</b> Everything you write stays on your own computer, protected by your password. Nothing is sent anywhere, and there is no account to create.</p>
+<div id="dl"></div>
+<p class="note"><b>One thing to know:</b> your computer may show a warning because this app doesn’t come from an app store. That is normal. Follow the short pictures below. You only do this once.</p>
+<div class="tabs"><button id="tw">Windows</button><button id="tm">Mac</button></div>
+<section id="win"></section><section id="mac" class="hide"></section>
+<p class="note">Need help? Contact <b>YOUR-EMAIL-HERE</b>.</p>
+</main>
+<script>
+// ===== EDIT THESE THREE LINKS after your installers are built =====
+const LINKS={win:'REPLACE-WITH-WINDOWS-INSTALLER-LINK',macArm:'REPLACE-WITH-MAC-APPLE-CHIP-LINK',macIntel:'REPLACE-WITH-MAC-INTEL-LINK'};
+const ua=navigator.userAgent, isMac=/Mac/.test(ua)&&!/iPhone|iPad/.test(ua), isWin=/Windows/.test(ua);
+const A='fill="#F6C945" stroke="#E0A800"',H='stroke="#E5322D" stroke-width="3" fill="none"';
+// small picture of a dialog: title, text lines, and which button/link is highlighted
+const pic=(t,lines,btn,hl)=>`<svg viewBox="0 0 320 150"><rect width="320" height="150" fill="#E8EEF7"/><rect x="20" y="12" width="280" height="126" rx="6" fill="#fff" stroke="#999"/><rect x="20" y="12" width="280" height="24" rx="6" fill="#2D5DA8"/><text x="30" y="29" fill="#fff" font-size="12" font-family="sans-serif">${t}</text>${lines.map((l,i)=>`<text x="32" y="${58+i*17}" font-size="12" font-family="sans-serif" fill="#333">${l}</text>`).join('')}<rect x="${hl?200:210}" y="104" width="${hl?88:78}" height="24" rx="4" fill="${hl?'#2D5DA8':'#ddd'}"/><text x="${hl?244:249}" y="120" text-anchor="middle" font-size="12" font-family="sans-serif" fill="${hl?'#fff':'#333'}">${btn}</text>${hl?`<rect x="194" y="98" width="100" height="36" rx="8" ${H}/>`:''}</svg>`;
+const win=[
+['1. Download and open the file','Click the big <b>Download</b> button above. If your browser says the file “isn’t commonly downloaded,” click <b>Keep</b> (it may be under the “…” menu). Then open the file you downloaded.',pic('Downloads',['Reflecting-setup.exe','Not commonly downloaded.'],'Keep',1)],
+['2. Click “More info”','A blue window says <b>“Windows protected your PC.”</b> Click the small words <b>More info</b>.',pic('Windows protected your PC',['Windows protected your PC','Click “More info” to continue'],'More info',1)],
+['3. Click “Run anyway”','A new button appears. Click <b>Run anyway</b>.',pic('Windows protected your PC',['Publisher: Unknown publisher','App: Reflecting'],'Run anyway',1)],
+['4. Finish the setup','Click <b>Next</b> or <b>Install</b> until it finishes. Open <b>Reflecting</b> from your Start menu and create your password.',pic('Reflecting Setup',['Ready to install Reflecting.'],'Install',1)]];
+const mac=[
+['1. Pick the right download','Click the Apple menu (top left) › <b>About This Mac</b>. If it says <b>Chip: Apple M…</b>, download <b>Apple chip</b>. If it says <b>Intel</b>, download <b>Intel</b>.',pic('About This Mac',['Chip: Apple M2','(or “Processor: Intel”)'],'OK',0)],
+['2. Drag it into Applications','Open the downloaded file. Drag the <b>Reflecting</b> icon onto the <b>Applications</b> folder.',`<svg viewBox="0 0 320 150"><rect width="320" height="150" fill="#E8EEF7"/><rect x="40" y="40" width="64" height="64" rx="14" fill="#1F2A44"/><text x="72" y="130" text-anchor="middle" font-size="12" font-family="sans-serif">Reflecting</text><path d="M120 72h80" stroke="#E5322D" stroke-width="4"/><path d="M196 62l14 10-14 10z" fill="#E5322D"/><rect x="220" y="44" width="64" height="56" rx="8" fill="#6FA8DC"/><text x="252" y="130" text-anchor="middle" font-size="12" font-family="sans-serif">Applications</text></svg>`],
+['3. Try to open it','Open <b>Reflecting</b> from Applications. Your Mac will say it can’t verify the app. Click <b>Done</b> (not “Move to Trash”).',pic('“Reflecting” not opened',['Apple could not verify it is free','of malware.'],'Done',1)],
+['4. Allow it once','Apple menu › <b>System Settings</b> › <b>Privacy &amp; Security</b>. Scroll down to the message about Reflecting and click <b>Open Anyway</b>. Type your Mac password, then click <b>Open</b>. After this, it opens normally every time.',pic('Privacy & Security',['“Reflecting” was blocked.'],'Open Anyway',1)]];
+const render=(id,steps)=>document.getElementById(id).innerHTML=steps.map(s=>`<div class="step"><h3>${s[0]}</h3>${s[1]}${s[2]}</div>`).join('')+(id==='mac'?`<div class="note"><b>If it says the app is “damaged”:</b> open <b>Terminal</b> (press ⌘+Space, type Terminal), paste this line, press Return, and open the app again:<br><code>xattr -cr /Applications/Reflecting.app</code></div>`:'');
+render('win',win);render('mac',mac);
+const btn=(h,t,c)=>`<a class="dl ${c||''}" href="${h}">${t}</a>`;
+document.getElementById('dl').innerHTML=isMac?btn(LINKS.macArm,'Download for Mac — Apple chip')+btn(LINKS.macIntel,'Download for Mac — Intel','alt')+btn(LINKS.win,'Download for Windows','alt'):btn(LINKS.win,'Download for Windows')+btn(LINKS.macArm,'Download for Mac — Apple chip','alt')+btn(LINKS.macIntel,'Download for Mac — Intel','alt');
+const show=m=>{document.getElementById('win').classList.toggle('hide',m);document.getElementById('mac').classList.toggle('hide',!m);tw.classList.toggle('on',!m);tm.classList.toggle('on',m)};
+tw.onclick=()=>show(false);tm.onclick=()=>show(true);show(isMac&&!isWin);
+</script></body></html>
