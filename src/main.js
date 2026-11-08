@@ -4,7 +4,7 @@ import { createUniver, LocaleType, mergeLocales } from '@univerjs/presets';
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
 import coreEn from '@univerjs/preset-sheets-core/locales/en-US';
 import '@univerjs/preset-sheets-core/lib/index.css';
-import { SECTIONS, blankPage } from './templates.js';
+import { SECTIONS, blankPage, COL_WEIGHTS } from './templates.js';
 
 const $ = (s) => document.querySelector(s);
 const app = $('#app');
@@ -16,6 +16,16 @@ const secOf = (k) => SECTIONS.find((s) => s.key === k);
 const pages = () => data.sections[cur.sec].pages;
 const mkPage = (s, n) => { const id = crypto.randomUUID(); return { id, title: 'Page ' + n, wb: blankPage(s, id) }; };
 const newData = () => ({ v: 1, sections: Object.fromEntries(SECTIONS.map((s) => [s.key, { pages: [mkPage(s, 1)] }])) });
+
+/* ---------- light / dark mode ---------- */
+let theme = 'light';
+try { theme = localStorage.getItem('reflecting-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch {}
+const applyTheme = () => {
+  document.documentElement.dataset.theme = theme;
+  try { U?.univerAPI.toggleDarkMode(theme === 'dark'); } catch {}
+  const b = $('#theme'); if (b) b.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+};
+applyTheme();
 
 /* ---------- password screens ---------- */
 function screen(html) {
@@ -63,9 +73,43 @@ async function persist() {
   if (s !== last) { await invoke('save', { data: s }); last = s; }
   const el = $('#saved'); if (el) el.textContent = 'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+const fitWidths = (p) => {
+  const avail = Math.max(600, $('#grid').clientWidth - 70);
+  const tot = COL_WEIGHTS.reduce((a, b) => a + b, 0);
+  const sh = Object.values(p.wb.sheets)[0]; sh.columnData = sh.columnData || {};
+  COL_WEIGHTS.forEach((w, i) => { sh.columnData[i] = { ...(sh.columnData[i] || {}), w: Math.max(90, Math.floor((avail * w) / tot)) }; });
+};
+const centerHeads = (p) => {
+  const cd = Object.values(p.wb.sheets)[0].cellData || {};
+  for (const r of [0, 1]) for (const c of Object.keys(cd[r] || {})) {
+    const cell = cd[r][c], s = cell.s;
+    if (typeof s === 'string' && p.wb.styles?.[s]) p.wb.styles[s].ht = 2;
+    else if (s && typeof s === 'object') s.ht = 2;
+    else cell.s = { ht: 2, vt: 2 };
+  }
+};
+const padCells = (p) => {
+  const PAD = { t: 4, b: 4, l: 10, r: 10 };
+  for (const st of Object.values(p.wb.styles || {})) if (st && typeof st === 'object' && !st.pd) st.pd = { ...PAD };
+  const cd = Object.values(p.wb.sheets)[0].cellData || {};
+  for (const row of Object.values(cd)) for (const cell of Object.values(row)) if (cell.s && typeof cell.s === 'object' && !cell.s.pd) cell.s.pd = { ...PAD };
+};
+const recolor = (p) => {
+  const fix = (st) => {
+    if (st?.bg?.rgb && st.bg.rgb.toUpperCase() === '#1F2A44') st.bg.rgb = '#556B2F';
+    if (st?.cl?.rgb && st.cl.rgb.toUpperCase() === '#1F2A44') st.cl.rgb = '#3B4A1F';
+  };
+  Object.values(p.wb.styles || {}).forEach(fix);
+  const cd = Object.values(p.wb.sheets)[0].cellData || {};
+  for (const row of Object.values(cd)) for (const cell of Object.values(row)) if (cell.s && typeof cell.s === 'object') fix(cell.s);
+};
 function openPage() {
   if (wb) { U.univerAPI.disposeUnit(wb.getId()); wb = null; }
   const p = pages()[cur.idx];
+  centerHeads(p);
+  padCells(p);
+  recolor(p);
+  if (!p.fitted) { fitWidths(p); p.fitted = true; }
   wb = U.univerAPI.createWorkbook(p.wb);
   $('#pos').textContent = `Page ${cur.idx + 1} of ${pages().length}`;
   $('#title').value = p.title;
@@ -76,9 +120,10 @@ async function goTo(sec, idx) { await persist(); cur = { sec, idx }; openPage();
 function startApp() {
   app.className = 'main';
   app.innerHTML = `<header><b class="logo">Reflecting</b><nav>${SECTIONS.map((s) => `<button class="tab" data-k="${s.key}">${s.name}</button>`).join('')}</nav><span class="sp"></span>
-    <button id="book">Book view</button><button id="pw">Password</button><button id="lock">Lock</button></header>
-    <div class="pagebar"><button id="prev">◀</button><span id="pos"></span><button id="next">▶</button><input id="title" maxlength="60"><button id="add">+ Add page</button><button id="del">Delete page</button><span id="saved"></span></div><div id="grid"></div>`;
+    <button id="theme"></button><button id="book">Book view</button><button id="pw">Password</button><button id="lock">Lock</button></header>
+    <div class="pagebar"><button id="prev">◀</button><span id="pos"></span><button id="next">▶</button><input id="title" maxlength="60"><button id="add">+ Add page</button><button id="del">Delete page</button><button id="fit">Fit to screen</button><span id="saved"></span></div><div id="grid"></div>`;
   U = createUniver({ locale: LocaleType.EN_US, locales: { [LocaleType.EN_US]: mergeLocales(coreEn) }, presets: [UniverSheetsCorePreset({ container: 'grid' })] });
+  applyTheme();
   cur = { sec: SECTIONS[0].key, idx: 0 }; openPage();
   document.querySelectorAll('.tab').forEach((t) => (t.onclick = () => goTo(t.dataset.k, 0)));
   $('#prev').onclick = () => cur.idx > 0 && goTo(cur.sec, cur.idx - 1);
@@ -92,6 +137,8 @@ function startApp() {
     if (!pages().length) pages().push(mkPage(secOf(cur.sec), 1));
     cur.idx = Math.min(cur.idx, pages().length - 1); openPage(); persist();
   };
+  $('#fit').onclick = () => { capture(); fitWidths(pages()[cur.idx]); openPage(); persist(); };
+  $('#theme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('reflecting-theme', theme); } catch {} applyTheme(); };
   $('#book').onclick = bookView; $('#pw').onclick = pwDialog; $('#lock').onclick = lock;
   saveT = setInterval(() => persist().catch(() => {}), 5000);
   const bump = () => { clearTimeout(idleT); idleT = setTimeout(lock, IDLE_MS); };

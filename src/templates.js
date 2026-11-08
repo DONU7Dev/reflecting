@@ -11,6 +11,8 @@ export const SECTIONS = [
 ];
 const HEAD = (s) => [s.who, s.what, 'How I responded (actions, choices, feelings)', 'The nature of my response', 'What I was protecting or desiring', 'Notes & reflections'];
 const W = [210, 280, 280, 190, 240, 220];
+export const COL_WEIGHTS = W;
+const PAD = { t: 4, b: 4, l: 10, r: 10 };
 
 export function blankPage(s, id) {
   const cd = { 0: {}, 1: {} };
@@ -21,9 +23,9 @@ export function blankPage(s, id) {
   return {
     id, name: s.name, appVersion: '1.0.0', locale: LocaleType.EN_US, sheetOrder: ['s1'],
     styles: {
-      t: { bl: 1, fs: 16, cl: { rgb: '#FFFFFF' }, bg: { rgb: '#1F2A44' }, vt: 2 },
-      h: { bl: 1, fs: 12, cl: { rgb: '#1F2A44' }, bg: { rgb: '#E9DDB8' }, tb: 3, vt: 2 },
-      w: { tb: 3, vt: 1, fs: 12 },
+      t: { bl: 1, fs: 16, cl: { rgb: '#FFFFFF' }, bg: { rgb: '#556B2F' }, ht: 2, vt: 2, pd: PAD },
+      h: { bl: 1, fs: 12, cl: { rgb: '#3B4A1F' }, bg: { rgb: '#E9DDB8' }, tb: 3, ht: 2, vt: 2, pd: PAD },
+      w: { tb: 3, vt: 1, fs: 12, pd: PAD },
     },
     sheets: { s1: { id: 's1', name: s.name, rowCount: 60, columnCount: 6, cellData: cd, columnData,
       rowData: { 0: { h: 40 }, 1: { h: 56 } }, mergeData: [{ startRow: 0, endRow: 0, startColumn: 0, endColumn: 5 }] } },
